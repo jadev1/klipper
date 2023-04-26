@@ -343,12 +343,23 @@ def main():
     else:
         logging.getLogger().setLevel(debuglevel)
     logging.info("Starting Klippy...")
-    start_args['software_version'] = util.get_git_version()
+    git_vers, git_status = util.get_git_version()
+    extra_files = [fname for code, fname in git_status
+                   if (code in ('??', '!!') and fname.endswith('.py')
+                       and (fname.startswith('klippy/kinematics/')
+                            or fname.startswith('klippy/extras/')))]
+    extra_files_desc = ""
+    if extra_files:
+        extra_files_desc = "\nUntracked files: %s" % (', '.join(extra_files),)
+        if not git_vers.endswith('-dirty'):
+            git_vers = git_vers + '-dirty'
+    start_args['software_version'] = git_vers
     start_args['cpu_info'] = util.get_cpu_info()
     if bglogger is not None:
         versions = "\n".join([
             "Args: %s" % (sys.argv,),
-            "Git version: %s" % (repr(start_args['software_version']),),
+            "Git version: %s%s" % (repr(start_args['software_version']),
+                                   extra_files_desc),
             "CPU: %s" % (start_args['cpu_info'],),
             "Python: %s" % (repr(sys.version),)])
         logging.info(versions)
